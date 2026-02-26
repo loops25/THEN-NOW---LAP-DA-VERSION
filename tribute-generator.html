@@ -1108,6 +1108,8 @@ function buildSeoBlock(titles, desc, tags, isSeries) {
 
 function buildPairCard(p, i) {
   const id = `pair${i}`;
+  // Store all texts safely before building HTML
+  storeText(`ov${id}`, p.overlay);
   const wrap = document.createElement('div');
   wrap.className = 'pair-wrap';
   wrap.innerHTML = `
@@ -1145,7 +1147,7 @@ function buildPairCard(p, i) {
           </div>
           <div class="overlay-caption">Gone ${p.deathYear} — ${p.overlayPhrase}</div>
         </div>
-        <button class="copy-btn" style="width:100%;justify-content:center" id="ov${id}" onclick="copyText(${JSON.stringify(p.overlay)},'ov${id}')">📋 Copiar Texto Overlay Completo</button>
+        <button class="copy-btn" style="width:100%;justify-content:center" id="ov${id}" onclick="copyStored('ov${id}','ov${id}')">📋 Copiar Texto Overlay Completo</button>
       </div>
 
       <!-- PROMPT 1 -->
@@ -1191,7 +1193,27 @@ function buildPairCard(p, i) {
   return wrap;
 }
 
+// ═══ SAFE TEXT STORE — evita que caracteres especiales rompan los onclick ═══
+const STORE = {};
+function storeText(id, text) { STORE[id] = text; }
+function copyStored(id, btnId) {
+  const text = STORE[id] || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const b = document.getElementById(btnId);
+    if (b) { const o = b.textContent; b.textContent = '✓ Copiado!'; b.classList.add('copied'); setTimeout(() => { b.textContent = o; b.classList.remove('copied'); }, 2000); }
+  }).catch(() => {
+    // fallback para navegadores sin clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    const b = document.getElementById(btnId);
+    if (b) { const o = b.textContent; b.textContent = '✓ Copiado!'; b.classList.add('copied'); setTimeout(() => { b.textContent = o; b.classList.remove('copied'); }, 2000); }
+  });
+}
+
 function mkPromptBlock(title, sub, text, id) {
+  storeText(id, text);
   return `
     <div class="prompt-block">
       <div class="prompt-block-top">
@@ -1199,14 +1221,14 @@ function mkPromptBlock(title, sub, text, id) {
           <div class="prompt-block-title">${title}</div>
           <div class="prompt-block-sub">${sub}</div>
         </div>
-        <button class="copy-btn" id="btn${id}" onclick="copyText(${JSON.stringify(text)},'btn${id}')">📋 Copiar</button>
+        <button class="copy-btn" id="btn${id}" onclick="copyStored('${id}','btn${id}')">📋 Copiar</button>
       </div>
       <div class="prompt-content">${esc(text)}</div>
     </div>`;
 }
 
 function mkAnimBlock(num, title, sub, isAi, text, id) {
-  // Parse: first line is the header [Kling...], rest is body
+  storeText(id, text);
   const lines = (text||'').split('\n');
   const header = lines[0] || '';
   const body = lines.slice(1).join('\n').trim();
@@ -1220,7 +1242,7 @@ function mkAnimBlock(num, title, sub, isAi, text, id) {
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           ${isAi ? '<span class="anim-ai-tag">✨ IA Generada</span>' : '<span class="anim-fixed-tag">🔒 Fija</span>'}
-          <button class="copy-btn" id="btn${id}" onclick="copyText(${JSON.stringify(text)},'btn${id}')">📋 Copiar</button>
+          <button class="copy-btn" id="btn${id}" onclick="copyStored('${id}','btn${id}')">📋 Copiar</button>
         </div>
       </div>
       <div class="anim-content">
@@ -1231,9 +1253,10 @@ function mkAnimBlock(num, title, sub, isAi, text, id) {
 }
 
 function buildCopyAllEl(allText) {
+  storeText('copyAll', allText);
   const wrap = document.createElement('div');
   wrap.className = 'copy-all-wrap';
-  wrap.innerHTML = `<button class="copy-all-btn" id="copyAllBtn" onclick="copyText(${JSON.stringify(allText)},'copyAllBtn')">📋 Copiar Todo — Todos los Prompts y Metadatos</button>`;
+  wrap.innerHTML = `<button class="copy-all-btn" id="copyAllBtn" onclick="copyStored('copyAll','copyAllBtn')">📋 Copiar Todo — Todos los Prompts y Metadatos</button>`;
   return wrap;
 }
 
@@ -1263,6 +1286,14 @@ function openPair(id) {
 }
 function copyEl(id, btn) {
   navigator.clipboard.writeText(document.getElementById(id)?.textContent||'').then(() => {
+    const o = btn.textContent; btn.textContent = '✓ Copiado'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = o; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const text = document.getElementById(id)?.textContent||'';
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
     const o = btn.textContent; btn.textContent = '✓ Copiado'; btn.classList.add('copied');
     setTimeout(() => { btn.textContent = o; btn.classList.remove('copied'); }, 2000);
   });
