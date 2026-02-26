@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRIBUTE GENERATOR — TimeGlow Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--black:#080808;--dark:#0f0f0f;--panel:#141414;--panel2:#1a1a1a;--border:#242424;--border2:#2e2e2e;--gold:#c9a84c;--gold2:#e8c97a;--gold3:rgba(201,168,76,0.08);--text:#e8e2d9;--muted:#5a5550;--muted2:#888;--success:#52b788;}
+body{background:var(--black);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(201,168,76,.06) 0%,transparent 60%),radial-gradient(ellipse 30% 30% at 100% 100%,rgba(139,26,26,.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+.wrap{max-width:780px;margin:0 auto;padding:48px 20px 80px;position:relative;z-index:1}
+.header{text-align:center;margin-bottom:52px}
+.header .eyebrow{font-size:9px;letter-spacing:.4em;color:var(--gold);text-transform:uppercase;opacity:.7;display:block;margin-bottom:14px}
+.header h1{font-family:'Playfair Display',serif;font-size:clamp(38px,7vw,64px);font-weight:900;line-height:1;letter-spacing:-.02em;color:var(--text)}
+.header h1 em{color:var(--gold);font-style:normal}
+.header p{margin-top:12px;font-size:11px;color:var(--muted2);letter-spacing:.06em}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:32px;margin-bottom:16px;position:relative;overflow:hidden}
+.section::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.section-label{font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:6px}
+.section-desc{font-size:11px;color:var(--muted2);margin-bottom:20px;line-height:1.6}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mode-btn{background:var(--dark);border:1px solid var(--border2);border-radius:4px;padding:24px 16px;cursor:pointer;text-align:center;transition:all .2s;color:var(--text);font-family:'DM Mono',monospace}
+.mode-btn:hover{border-color:var(--gold);background:var(--panel2)}
+.mode-btn.active{border-color:var(--gold);background:var(--gold3)}
+.mode-btn .icon{font-size:26px;display:block;margin-bottom:10px}
+.mode-btn .label{font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.mode-btn .desc{font-size:10px;color:var(--muted2);margin-top:6px;line-height:1.5}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:500px){.cat-grid{grid-template-columns:repeat(2,1fr)}}
+.cat-btn{background:var(--dark);border:1px solid var(--border2);border-radius:4px;padding:18px 10px;cursor:pointer;text-align:center;transition:all .2s;color:var(--text);font-family:'DM Mono',monospace}
+.cat-btn:hover{border-color:var(--gold)}
+.cat-btn.active{border-color:var(--gold);background:var(--gold3);color:var(--gold)}
+.cat-btn .icon{font-size:22px;display:block;margin-bottom:8px}
+.cat-btn .name{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.cat-btn .hint{font-size:9px;color:var(--muted2);margin-top:4px;line-height:1.4}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:5px}
+.field .hint{font-size:10px;color:var(--muted2);margin-bottom:8px;line-height:1.5}
+.field input{width:100%;background:var(--dark);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:13px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.07)}
+.field input::placeholder{color:var(--muted);opacity:.6}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:500px){.fields-grid{grid-template-columns:1fr}}
+.gen-btn{width:100%;padding:18px;background:var(--gold);color:var(--black);border:none;border-radius:3px;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
+.gen-btn:hover{background:var(--gold2);transform:translateY(-1px)}
+.gen-btn:disabled{background:#222;color:#444;cursor:not-allowed;transform:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+.loading-box{text-align:center;padding:48px 20px}
+.loading-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);margin-bottom:8px}
+.loading-sub{font-size:11px;color:var(--muted2);letter-spacing:.04em;line-height:1.7}
+.pair-header{background:var(--panel2);border:1px solid var(--border2);border-radius:4px;padding:18px 22px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color .2s}
+.pair-header:hover{border-color:var(--gold)}
+.pair-header.open{border-color:var(--gold);border-bottom-color:transparent;border-radius:4px 4px 0 0;margin-bottom:0}
+.pair-num{font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.1em}
+.pair-deceased{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--text)}
+.pair-sep{color:var(--muted);font-size:12px;padding:0 6px}
+.pair-living{font-size:12px;color:var(--gold);letter-spacing:.06em}
+.pair-meta{font-size:10px;color:var(--muted2);margin-top:5px}
+.pair-arrow{color:var(--muted);transition:transform .3s;font-size:16px;flex-shrink:0}
+.pair-header.open .pair-arrow{transform:rotate(180deg);color:var(--gold)}
+.pair-body{background:var(--panel);border:1px solid var(--gold);border-top:none;border-radius:0 0 4px 4px;padding:24px;margin-bottom:20px;display:none}
+.pair-body.open{display:block}
+.prompt-block{background:var(--dark);border:1px solid var(--border2);border-radius:3px;margin-bottom:10px;overflow:hidden}
+.prompt-block-header{display:flex;align-items:flex-start;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border);gap:10px}
+.prompt-block-labels{flex:1}
+.prompt-block-label{font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);opacity:.8}
+.prompt-block-sublabel{font-size:9px;color:var(--muted2);margin-top:3px}
+.copy-btn{background:transparent;border:1px solid var(--border2);color:var(--muted2);border-radius:3px;padding:5px 14px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.copy-btn:hover{border-color:var(--gold);color:var(--gold)}
+.copy-btn.copied{border-color:var(--success);color:var(--success)}
+.prompt-text{padding:15px;font-size:11px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;max-height:220px;overflow-y:auto}
+.prompt-text::-webkit-scrollbar{width:3px}
+.prompt-text::-webkit-scrollbar-thumb{background:var(--border2)}
+.overlay-block{background:linear-gradient(135deg,rgba(201,168,76,.06),transparent);border:1px solid rgba(201,168,76,.2);border-radius:3px;padding:20px;margin-bottom:10px}
+.overlay-block-label{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:4px}
+.overlay-block-desc{font-size:10px;color:var(--muted2);margin-bottom:14px;line-height:1.5}
+.overlay-preview{background:var(--black);border-radius:3px;padding:16px;margin-bottom:12px;text-align:center}
+.overlay-names-row{display:flex;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.overlay-name-dead{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--text)}
+.overlay-name-live{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--gold)}
+.overlay-ages-row{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:10px}
+.overlay-age-dead{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:#e74c3c}
+.overlay-age-mid{font-size:13px;color:var(--muted2)}
+.overlay-age-live{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:#27ae60}
+.overlay-phrase-text{font-size:10px;color:var(--muted2);font-style:italic}
+.overlay-copy-btn{width:100%;background:transparent;border:1px solid var(--border2);color:var(--muted2);border-radius:3px;padding:9px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.overlay-copy-btn:hover{border-color:var(--gold);color:var(--gold)}
+.overlay-copy-btn.copied{border-color:var(--success);color:var(--success)}
+.seo-title-card{background:var(--dark);border:1px solid var(--border2);border-radius:3px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.seo-num{font-size:20px;font-weight:900;color:rgba(201,168,76,.2);font-family:'Playfair Display',serif;flex-shrink:0;line-height:1;margin-top:2px}
+.seo-text{font-size:12px;line-height:1.6;color:var(--text);flex:1}
+.seo-desc-block{background:var(--dark);border:1px solid var(--border2);border-radius:3px;padding:16px;margin-bottom:8px}
+.seo-block-label{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:10px}
+.seo-block-text{font-size:11px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.series-seo{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:28px;margin-bottom:16px;position:relative;overflow:hidden}
+.series-seo::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.copy-all-btn{width:100%;padding:18px;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:3px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:8px}
+.copy-all-btn:hover{background:var(--gold3)}
+.copy-all-btn.copied{border-color:var(--success);color:var(--success)}
+.info-box{background:var(--dark);border:1px solid var(--border2);border-radius:3px;padding:12px 15px;margin-bottom:8px;font-size:10px;color:var(--muted2);line-height:1.6}
+.info-box strong{color:var(--gold)}
+hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.hidden{display:none!important}
+@media(max-width:500px){.section{padding:20px 16px}.pair-body{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <span class="eyebrow">TimeGlow Studio · Generador de Prompts con IA</span>
+  <h1>TRIBUTE<br><em>GENERATOR</em></h1>
+  <p>Genera todos los prompts + metadatos para tu vídeo tributo · Un solo clic</p>
+</div>
+
+<!-- PASO 1 -->
+<div class="section">
+  <div class="section-label">Paso 1 — ¿Cómo quieres trabajar?</div>
+  <div class="section-desc">Elige si quieres que la IA te sugiera los mejores pares automáticamente, o si prefieres introducirlos tú manualmente.</div>
+  <div class="mode-grid">
+    <button class="mode-btn active" id="modeAutoBtn" onclick="setMode('auto')">
+      <span class="icon">🤖</span>
+      <span class="label">Serie Automática</span>
+      <span class="desc">La IA elige los 5 mejores pares según tu categoría y audiencia</span>
+    </button>
+    <button class="mode-btn" id="modeManualBtn" onclick="setMode('manual')">
+      <span class="icon">✏️</span>
+      <span class="label">Par Manual</span>
+      <span class="desc">Tú introduces el artista fallecido y la persona que rinde homenaje</span>
+    </button>
+  </div>
+</div>
+
+<!-- PASO 2A: AUTO -->
+<div id="autoSection" class="section">
+  <div class="section-label">Paso 2 — Elige una categoría</div>
+  <div class="section-desc">La IA seleccionará 5 pares con máximo impacto emocional para tu audiencia de EE.UU., Brasil y México (45–65 años).</div>
+  <div class="cat-grid">
+    <button class="cat-btn" onclick="selectCat('musicians',this)">
+      <span class="icon">🎤</span><span class="name">Músicos</span><span class="hint">Pop, Rock, R&amp;B, Soul, Latin</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('actors',this)">
+      <span class="icon">🎬</span><span class="name">Actores</span><span class="hint">Hollywood clásico 70s–2000s</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('boxers',this)">
+      <span class="icon">🥊</span><span class="name">Boxeadores</span><span class="hint">Leyendas del ring</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('footballers',this)">
+      <span class="icon">⚽</span><span class="name">Futbolistas</span><span class="hint">América Latina y global</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('presidents',this)">
+      <span class="icon">🏛️</span><span class="name">Presidentes</span><span class="hint">Líderes mundiales icónicos</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('mixed',this)">
+      <span class="icon">⚡</span><span class="name">Mixto Viral</span><span class="hint">La IA elige la mejor mezcla</span>
+    </button>
+  </div>
+  <button class="gen-btn" id="autoGenBtn" style="margin-top:20px" onclick="generateAuto()" disabled>⚡ Generar Serie con IA</button>
+</div>
+
+<!-- PASO 2B: MANUAL -->
+<div id="manualSection" class="section hidden">
+  <div class="section-label">Paso 2 — Introduce el par</div>
+  <div class="section-desc">Rellena los datos del artista fallecido y de la persona viva que le rinde homenaje. La IA generará todos los prompts automáticamente.</div>
+  <div class="field">
+    <label>Artista Fallecido — Nombre completo</label>
+    <div class="hint">Escríbelo exactamente como quieres que aparezca en la lápida</div>
+    <input type="text" id="nameDeceased" placeholder="ej. Elvis Presley" oninput="checkManual()"/>
+  </div>
+  <div class="fields-grid">
+    <div class="field">
+      <label>Fecha de Nacimiento</label>
+      <div class="hint">En inglés americano — Month Day, Year</div>
+      <input type="text" id="birthDate" placeholder="ej. January 8, 1935" oninput="checkManual()"/>
+    </div>
+    <div class="field">
+      <label>Fecha de Fallecimiento</label>
+      <div class="hint">En inglés americano — Month Day, Year</div>
+      <input type="text" id="deathDate" placeholder="ej. August 16, 1977" oninput="checkManual()"/>
+    </div>
+  </div>
+  <div class="field">
+    <label>Persona Viva que Rinde Homenaje</label>
+    <div class="hint">Presidente, rey, líder mundial o celebridad reconocida globalmente</div>
+    <input type="text" id="nameLiving" placeholder="ej. Donald Trump" oninput="checkManual()"/>
+  </div>
+  <div class="field">
+    <label>Edad Actual de la Persona Viva</label>
+    <div class="hint">Se usará para el texto overlay en tu editor de vídeo</div>
+    <input type="text" id="ageLiving" placeholder="ej. 78" oninput="checkManual()"/>
+  </div>
+  <button class="gen-btn" id="manualGenBtn" onclick="generateManual()" disabled>⚡ Generar Todos los Prompts</button>
+</div>
+
+<!-- RESULTADOS -->
+<div id="resultsSection" class="hidden"></div>
+
+</div>
+<script>
+const GROQ_KEY="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";
+let currentMode='auto',selectedCat=null;
+
+const GHOST_EFFECTS=[
+  {name:"Golden Particle",style:"Wispy spirit dissolving into particles of light, warm golden hour glow"},
+  {name:"Foggy",style:"Ghostly figure emerging from fog, partially transparent, moonlight shining through body"},
+  {name:"White Robe",style:"Spectral figure with white flowing robes"},
+  {name:"Golden Aura",style:"Translucent ghost with golden halo light, soft glow emanating from within"},
+  {name:"Ethereal Ring",style:"Ethereal ghost with an angelic ring floating over the head"},
+  {name:"Phantom",style:"Phantom draped in tattered white cloth, floating mid-air, surrounded by swirling ethereal smoke"},
+  {name:"Golden Hour",style:"Softly luminous ghost in golden hour warmth, light leaks and retro blur, peaceful nostalgic aura"},
+  {name:"Autumn Orange",style:"Ethereal ghost with autumn orange light filtering through, soft focus and vintage film texture, deeply nostalgic vibe"},
+];
+
+const ANIM1_FIXED=`[Kling 2.1 — Animation 1: Place Flowers]
+The man turns around and carefully places down the flowers on the gravestone. Then turns back to face the camera with a solemn expression.`;
+
+function setMode(m){
+  currentMode=m;
+  document.getElementById('modeAutoBtn').classList.toggle('active',m==='auto');
+  document.getElementById('modeManualBtn').classList.toggle('active',m==='manual');
+  document.getElementById('autoSection').classList.toggle('hidden',m!=='auto');
+  document.getElementById('manualSection').classList.toggle('hidden',m!=='manual');
+  document.getElementById('resultsSection').classList.add('hidden');
+  document.getElementById('resultsSection').innerHTML='';
+}
+
+function selectCat(cat,btn){
+  selectedCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('autoGenBtn').disabled=false;
+}
+
+function checkManual(){
+  const v=id=>document.getElementById(id).value.trim();
+  document.getElementById('manualGenBtn').disabled=!(v('nameDeceased')&&v('nameLiving')&&v('birthDate')&&v('deathDate')&&v('ageLiving'));
+}
+
+function buildP1(deceased,living,birth,death){
+  return JSON.stringify({
+    INPUT_VARIABLES:{reference_person_A_deceased:deceased,reference_person_B_living:living,birth_date:birth,death_date:death},
+    composition_blueprint:{framing_type:"Vertical 9:16 Portrait",alignment:"Perfectly Centered.",visual_split:"Asymmetrical 45/55 Split. LEFT tombstone + grave base. RIGHT living person.",person_framing:"STRICT MEDIUM CLOSE-UP (Chest Up). ABSOLUTELY NO WAIST, NO HIPS, NO LEGS VISIBLE.",depth_layering:"Living person IN FRONT of grave base. Foreground; grave is mid-ground.",camera_height:"Eye-level with the Living Person."},
+    camera_technical:{device:"iPhone 15 Pro Max. 24mm lens f/11 (Deep Focus).",focus:"ABSOLUTELY NO BLUR, NO BOKEH. Everything fully sharp.",fidelity:"100% clean — no grain, no filters, zero blur. Raw digital image."},
+    tombstone_specs:{structure:`Formal stone monument styled to match ${deceased}'s personality and legacy.`,placement:"Tombstone ALWAYS on the LEFT side of the frame.",grave_base:"CLEARLY VISIBLE elevated grave base/platform.",flowers:"Fresh flower arrangements ON TOP of grave base.",portrait:`LARGE high-gloss ceramic oval photo of ${deceased} in their iconic prime/youth.`,engraving:`Full Name: ${deceased}. Born: ${birth}. Died: ${death}. ABSOLUTELY NO BRACKETS.`,text_quality:"Clean black lettering, deeply carved, 100% legible."},
+    living_subject_specs:{identity:`${living} as they look currently — aged, realistic.`,placement:"FOREGROUND-RIGHT. Body overlaps right edge of grave.",flowers:"Holding fresh white lilies/roses at chest level, close to heart.",attire:"Respectful formal mourning wear — Black suit/coat.",eye_contact:"Direct gaze into the camera lens.",expression:"SERIOUS, slightly mourning. No smile, no smirk. Subtle sadness in the eyes."},
+    environment:{location:"Peaceful, high-end memorial park with visible trees and grass."},
+    technical:{aspect_ratio:"--ar 9:16",style:"Photorealistic viral social media snapshot. High fidelity texture.",negative_prompt:"full body, waist, hips, legs, feet, shoes, smile, smirk, blur, bokeh, film grain, noise, vignette, brackets, cartoon, bad crop, head cut off"}
+  },null,2);
+}
+
+function buildP2(deceased,living,ghostStyle,bg){
+  return `[Hugging OR Arms around each other's shoulders]
+A candid, hyper-realistic, 100% sharp iPhone 15 Pro Max photo of TWO characters.
+
+- REFERENCE 1: Use the cemetery image as master scene. Retain exact background and ${living} on the RIGHT.
+- REFERENCE 2: Insert ${deceased} on the LEFT.
+
+GHOST EFFECT — ${deceased} appears as: ${ghostStyle}
+
+POSE: Both face camera. Hugging warmly or arms around each other's shoulders. Genuine emotion.
+FRAMING: Medium-Wide Two-Shot (Knees to Head).
+BACKGROUND: ${bg}
+
+REALISM: Natural daylight. Zero grain. 100% sharp. No blur, no bokeh.
+NEGATIVE: wings on right character, floating, transparent ghost, sticker effect, bad compositing, blurry face, blur, bokeh, cartoon, 3d render, extra fingers`;
+}
+
+function buildOverlay(deceased,living,ageDead,ageLive,year,phrase){
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━
+CAPCUT / EDITOR — OVERLAY TEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LINE 1 — Names (top):
+${deceased.toUpperCase()}     ${living.toUpperCase()}
+
+LINE 2 — Ages (center, BIG):
+${ageDead} 🪦  AGE  ${ageLive}
+
+LINE 3 — Caption (bottom):
+Gone ${year} — ${phrase}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SUGGESTED STYLING:
+• Line 1: White bold, 36–42px
+• ${ageDead} (left): RED, 80–100px bold
+• ${ageLive} (right): GREEN, 80–100px bold
+• Line 3: White italic, 26–30px
+━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
+
+async function callGroq(prompt){
+  const body=JSON.stringify({model:"llama-3.3-70b-versatile",messages:[{role:"user",content:prompt}],temperature:0.9,max_tokens:4000});
+  const urls=["https://api.groq.com/openai/v1/chat/completions","https://corsproxy.io/?"+encodeURIComponent("https://api.groq.com/openai/v1/chat/completions")];
+  let err;
+  for(const url of urls){
+    try{
+      const r=await fetch(url,{method:"POST",headers:{"Authorization":`Bearer ${GROQ_KEY}`,"Content-Type":"application/json"},body});
+      if(!r.ok)throw new Error(`HTTP ${r.status}`);
+      const j=await r.json();
+      return JSON.parse(j.choices[0].message.content.trim().replace(/```json|```/g,'').trim());
+    }catch(e){err=e;}
+  }
+  throw err||new Error("No se pudo conectar");
+}
+
+async function generateManual(){
+  const deceased=document.getElementById('nameDeceased').value.trim();
+  const living=document.getElementById('nameLiving').value.trim();
+  const birth=document.getElementById('birthDate').value.trim();
+  const death=document.getElementById('deathDate').value.trim();
+  const ageLiving=document.getElementById('ageLiving').value.trim();
+  const by=parseInt(birth.match(/\d{4}/)?.[0]);
+  const dy=parseInt(death.match(/\d{4}/)?.[0]);
+  const ageDead=(by&&dy)?dy-by:'?';
+  showLoading();
+  try{
+    const d=await callGroq(`You are an expert YouTube Shorts content strategist for emotional tribute videos.
+Pair: DECEASED = ${deceased} | LIVING = ${living} | Born: ${birth} | Died: ${death} | Age at death: ${ageDead}
+Respond ONLY with valid JSON, no markdown:
+{"ghostEffect":"most fitting: Golden Particle/Foggy/White Robe/Golden Aura/Ethereal Ring/Phantom/Golden Hour/Autumn Orange","ghostStyle":"full ghost style description sentence","background":"specific visually spectacular cemetery or memorial park location description","anim2":"unique deeply emotional Kling 2.1 animation for reunion of ${deceased} spirit and ${living}. Start with [Kling 2.1 — Animation 2: Reunion]","anim3":"unique Kling 2.1 camera pan transition to next tribute pair. Start with [Kling 2.1 — Animation 3: Pan Transition]","overlayPhrase":"devastatingly emotional 3-4 word English phrase (e.g. Gone Too Soon)","titles":["Title 1 American English — 5 principles: concrete emotion, understood in 1 second, existing tension, title+thumbnail system, unresolved loop. Reference ${living} mourning ${deceased}. 1-2 emojis.","Title 2 — different angle + emoji","Title 3 — different angle + emoji"],"description":"Emotionally charged YouTube Shorts description American English 3-4 sentences + hashtags mentioning both ${deceased} and ${living}","tags":["15 SEO tags"]}`);
+    renderManual({deceased,living,birth,death,ageDead,ageLiving,deathYear:dy,ghostEffect:d.ghostEffect,prompt1:buildP1(deceased,living,birth,death),prompt2:buildP2(deceased,living,d.ghostStyle,d.background),anim1:ANIM1_FIXED,anim2:d.anim2,anim3:d.anim3,overlay:buildOverlay(deceased,living,ageDead,ageLiving,dy,d.overlayPhrase),overlayPhrase:d.overlayPhrase,titles:d.titles,description:d.description,tags:d.tags});
+  }catch(e){showError(e.message);}
+}
+
+async function generateAuto(){
+  showLoading();
+  const cats={musicians:"iconic DECEASED music artists (Pop,Rock,R&B,Soul,Latin) paired with living presidents/kings/world leaders. Maximum emotional impact for 45-65yr USA/Brazil/Mexico.",actors:"iconic DECEASED Hollywood actors 1970s-2000s paired with living A-list actors or world leaders.",boxers:"iconic DECEASED boxing legends paired with living boxing champions or presidents.",footballers:"iconic DECEASED football/soccer legends paired with living football icons or world leaders. Latin American focus.",presidents:"iconic DECEASED world leaders paired with living world leaders. Maximum historical contrast.",mixed:"5 diverse DECEASED icons (music,sports,acting,politics) each paired with most emotionally impactful living person. Maximum viral for 45-65yr USA/Brazil/Mexico."};
+  try{
+    const d=await callGroq(`Elite YouTube Shorts content strategist. Generate 5-pair tribute video series.
+Category: ${cats[selectedCat]}
+RULES: Every deceased person MUST BE VERIFIABLY DECEASED. Each pair different ghost effect. Unique anim2 and anim3 per pair. Maximum emotional resonance.
+Respond ONLY with valid JSON, no markdown:
+{"pairs":[{"deceased":"Full name","living":"Full name","birth":"Month Day, Year","death":"Month Day, Year","ageDeceased":number,"ageLiving":number,"deathYear":number,"ghostEffect":"Golden Particle/Foggy/White Robe/Golden Aura/Ethereal Ring/Phantom/Golden Hour/Autumn Orange","ghostStyle":"full ghost style description","background":"specific visually spectacular memorial location","anim2":"unique emotional Kling 2.1 reunion. Start [Kling 2.1 — Animation 2: Reunion]","anim3":"unique Kling 2.1 pan transition. Start [Kling 2.1 — Animation 3: Pan Transition]","overlayPhrase":"3-4 word devastating English phrase"}],"seriesTitles":["Title 1 American English devastating 5-principles 1-2 emojis referencing powerful living people mourning deceased legends","Title 2 different angle","Title 3 different angle"],"seriesDescription":"Emotionally charged series description American English + hashtags","seriesTags":["15 SEO tags"]}`);
+    const pairs=d.pairs.map(p=>({...p,ageDead:p.ageDeceased,prompt1:buildP1(p.deceased,p.living,p.birth,p.death),prompt2:buildP2(p.deceased,p.living,p.ghostStyle,p.background),anim1:ANIM1_FIXED,overlay:buildOverlay(p.deceased,p.living,p.ageDeceased,p.ageLiving,p.deathYear,p.overlayPhrase)}));
+    renderAuto(pairs,d);
+  }catch(e){showError(e.message);}
+}
+
+function renderManual(p){
+  const sec=document.getElementById('resultsSection');
+  sec.innerHTML='';sec.classList.remove('hidden');
+  const seo=document.createElement('div');
+  seo.className='series-seo';
+  seo.innerHTML=`<div class="section-label">📺 Títulos para YouTube — Elige el más impactante</div><div class="section-desc">La IA ha generado 3 títulos con distintos ángulos emocionales. Todos siguen los 5 principios de viralidad.</div>${(p.titles||[]).map((t,i)=>`<div class="seo-title-card"><div class="seo-num">0${i+1}</div><div class="seo-text" id="mt${i}">${t}</div><button class="copy-btn" onclick="copyEl('mt${i}',this)">COPIAR</button></div>`).join('')}<div class="seo-desc-block" style="margin-top:10px"><div class="seo-block-label">📝 Descripción</div><div class="seo-block-text" id="mdesc">${p.description||''}</div><button class="copy-btn" style="margin-top:10px" onclick="copyEl('mdesc',this)">COPIAR</button></div><div class="seo-desc-block" style="margin-top:8px"><div class="seo-block-label">🏷️ Etiquetas / Tags</div><div class="seo-block-text" id="mtags">${(p.tags||[]).join(', ')}</div><button class="copy-btn" style="margin-top:10px" onclick="copyEl('mtags',this)">COPIAR</button></div>`;
+  sec.appendChild(seo);
+  sec.appendChild(buildPairCard(p,0));
+  sec.appendChild(buildCopyAll(buildAllText([p],false,null)));
+  setTimeout(()=>{openPair('pair0');sec.scrollIntoView({behavior:'smooth',block:'start'});},100);
+}
+
+function renderAuto(pairs,d){
+  const sec=document.getElementById('resultsSection');
+  sec.innerHTML='';sec.classList.remove('hidden');
+  const seo=document.createElement('div');
+  seo.className='series-seo';
+  seo.innerHTML=`<div class="section-label">📺 Metadatos de la Serie — YouTube</div><div class="section-desc">Elige el título que mejor represente toda la serie. Descripción y tags son para el vídeo completo.</div>${(d.seriesTitles||[]).map((t,i)=>`<div class="seo-title-card"><div class="seo-num">0${i+1}</div><div class="seo-text" id="st${i}">${t}</div><button class="copy-btn" onclick="copyEl('st${i}',this)">COPIAR</button></div>`).join('')}<div class="seo-desc-block" style="margin-top:10px"><div class="seo-block-label">📝 Descripción</div><div class="seo-block-text" id="sdesc">${d.seriesDescription||''}</div><button class="copy-btn" style="margin-top:10px" onclick="copyEl('sdesc',this)">COPIAR</button></div><div class="seo-desc-block" style="margin-top:8px"><div class="seo-block-label">🏷️ Etiquetas / Tags</div><div class="seo-block-text" id="stags">${(d.seriesTags||[]).join(', ')}</div><button class="copy-btn" style="margin-top:10px" onclick="copyEl('stags',this)">COPIAR</button></div>`;
+  sec.appendChild(seo);
+  pairs.forEach((p,i)=>sec.appendChild(buildPairCard(p,i)));
+  sec.appendChild(buildCopyAll(buildAllText(pairs,true,d)));
+  setTimeout(()=>{openPair('pair0');sec.scrollIntoView({behavior:'smooth',block:'start'});},100);
+}
+
+function buildPairCard(p,i){
+  const id=`pair${i}`;
+  const div=document.createElement('div');
+  div.innerHTML=`
+<div class="pair-header" id="hdr${id}" onclick="togglePair('${id}')">
+  <div>
+    <div class="pair-num">Par ${i+1}</div>
+    <div><span class="pair-deceased">${p.deceased}</span><span class="pair-sep">+</span><span class="pair-living">${p.living}</span></div>
+    <div class="pair-meta">🪦 Murió a los ${p.ageDead||p.ageDeceased} años · ${p.living} tiene ${p.ageLiving} años · Efecto: ${p.ghostEffect}</div>
+  </div>
+  <span class="pair-arrow">▾</span>
+</div>
+<div class="pair-body" id="body${id}">
+
+  <div class="overlay-block">
+    <div class="overlay-block-label">🎬 Texto Overlay para el Editor (CapCut / Premiere)</div>
+    <div class="overlay-block-desc">Copia este texto y aplícalo directamente en tu editor. Colores sugeridos: número izquierdo en ROJO, derecho en VERDE.</div>
+    <div class="overlay-preview">
+      <div class="overlay-names-row">
+        <span class="overlay-name-dead">${p.deceased.toUpperCase()}</span>
+        <span class="overlay-name-live">${p.living.toUpperCase()}</span>
+      </div>
+      <div class="overlay-ages-row">
+        <span class="overlay-age-dead">${p.ageDead||p.ageDeceased}</span>
+        <span class="overlay-age-mid">🪦 AGE</span>
+        <span class="overlay-age-live">${p.ageLiving}</span>
+      </div>
+      <div class="overlay-phrase-text">Gone ${p.deathYear} — ${p.overlayPhrase}</div>
+    </div>
+    <button class="overlay-copy-btn" id="ov${id}" onclick="copyText(${JSON.stringify(p.overlay)},'ov${id}')">📋 COPIAR TEXTO OVERLAY COMPLETO</button>
+  </div>
+
+  <div class="info-box">📸 <strong>Prompt 1 — Imagen Lápida</strong> — Imagen estática con la persona viva frente a la lápida. Úsalo en Midjourney, DALL-E o Flux.</div>
+  ${mkBlock('Prompt 1 — Imagen Lápida (JSON)','Pega este JSON en tu generador de imágenes IA',p.prompt1,`p1${id}`)}
+
+  <div class="info-box">👻 <strong>Prompt 2 — Reunión Espiritual (${p.ghostEffect})</strong> — El artista fallecido aparece como espíritu junto a la persona viva. Necesitas la imagen del Prompt 1 como referencia.</div>
+  ${mkBlock(`Prompt 2 — Reunión Espiritual (${p.ghostEffect})`,'Usa imagen del Prompt 1 como referencia + foto del artista fallecido',p.prompt2,`p2${id}`)}
+
+  <div class="info-box">🎬 <strong>Animaciones Kling 2.1</strong> — 3 animaciones para tu vídeo. Úsalas en Kling AI v2.1 con las imágenes generadas.</div>
+  ${mkBlock('Animación 1 — Dejar Flores en la Lápida','Igual para todos los vídeos — no cambia',p.anim1,`a1${id}`)}
+  ${mkBlock('Animación 2 — Reunión Emocional','Generada por IA específicamente para este par',p.anim2,`a2${id}`)}
+  ${mkBlock('Animación 3 — Transición / Paneo al Siguiente Par','Generada por IA específicamente para este par',p.anim3,`a3${id}`)}
+
+</div>`;
+  return div;
+}
+
+function mkBlock(label,sub,text,id){
+  return `<div class="prompt-block"><div class="prompt-block-header"><div class="prompt-block-labels"><div class="prompt-block-label">${label}</div><div class="prompt-block-sublabel">${sub}</div></div><button class="copy-btn" id="btn${id}" onclick="copyText(${JSON.stringify(text)},'btn${id}')">COPIAR</button></div><div class="prompt-text">${esc(text)}</div></div>`;
+}
+
+function buildCopyAll(txt){
+  const d=document.createElement('div');
+  d.style.marginTop='20px';
+  d.innerHTML=`<button class="copy-all-btn" id="copyAllBtn" onclick="copyText(${JSON.stringify(txt)},'copyAllBtn')">📋 COPIAR TODO — Todos los prompts y metadatos</button>`;
+  return d;
+}
+
+function buildAllText(pairs,isSeries,d){
+  let t='===== TRIBUTE GENERATOR — FULL OUTPUT =====\n\n';
+  if(isSeries&&d){t+=`SERIES TITLES:\n${(d.seriesTitles||[]).join('\n')}\n\nDESCRIPTION:\n${d.seriesDescription}\n\nTAGS:\n${(d.seriesTags||[]).join(', ')}\n\n`;}
+  pairs.forEach((p,i)=>{
+    t+=`\n===== PAR ${i+1}: ${p.deceased.toUpperCase()} + ${p.living.toUpperCase()} =====\n\n`;
+    t+=`OVERLAY:\n${p.overlay}\n\nPROMPT 1:\n${p.prompt1}\n\nPROMPT 2 (${p.ghostEffect}):\n${p.prompt2}\n\nANIMATION 1:\n${p.anim1}\n\nANIMATION 2:\n${p.anim2}\n\nANIMATION 3:\n${p.anim3}\n\n`;
+    if(p.titles)t+=`TITLES:\n${p.titles.join('\n')}\n\nDESCRIPTION:\n${p.description}\n\nTAGS:\n${(p.tags||[]).join(', ')}\n\n`;
+  });
+  return t;
+}
+
+function togglePair(id){
+  document.getElementById('hdr'+id).classList.toggle('open');
+  document.getElementById('body'+id).classList.toggle('open');
+}
+function openPair(id){
+  document.getElementById('hdr'+id)?.classList.add('open');
+  document.getElementById('body'+id)?.classList.add('open');
+}
+function copyEl(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id)?.textContent||'').then(()=>{
+    const o=btn.textContent;btn.textContent='✓ COPIADO';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied');},2000);
+  });
+}
+function copyText(text,btnId){
+  navigator.clipboard.writeText(text).then(()=>{
+    if(btnId){const b=document.getElementById(btnId);if(b){const o=b.textContent;b.textContent='✓ COPIADO!';b.classList.add('copied');setTimeout(()=>{b.textContent=o;b.classList.remove('copied');},2000);}}
+  });
+}
+function esc(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showLoading(){
+  const s=document.getElementById('resultsSection');
+  s.classList.remove('hidden');
+  s.innerHTML=`<div class="section"><div class="loading-box"><div class="spinner"></div><div class="loading-title">La IA está generando tu tributo...</div><p class="loading-sub">Creando prompts, animaciones y metadatos<br>Esto puede tardar unos segundos</p></div></div>`;
+  s.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function showError(msg){
+  document.getElementById('resultsSection').innerHTML=`<div class="section" style="border-color:#8b1a1a"><div style="text-align:center;padding:32px"><div style="font-size:28px;margin-bottom:12px">⚠️</div><div style="font-family:'Playfair Display',serif;font-size:18px;color:#e74c3c;margin-bottom:10px">Error de conexión con Groq</div><div style="font-size:11px;color:var(--muted2);margin-bottom:16px;line-height:1.6">${msg}</div><div style="font-size:11px;color:var(--muted2);background:var(--dark);padding:14px;border-radius:3px;text-align:left;line-height:1.8">💡 <strong style="color:var(--gold)">Solución:</strong> Sube este archivo a GitHub Pages para que Groq funcione sin restricciones CORS.</div></div></div>`;
+}
+</script>
+</body>
+</html>
