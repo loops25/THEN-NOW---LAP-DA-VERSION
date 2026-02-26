@@ -1108,89 +1108,100 @@ function buildSeoBlock(titles, desc, tags, isSeries) {
 
 function buildPairCard(p, i) {
   const id = `pair${i}`;
-  // Store all texts safely before building HTML
-  storeText(`ov${id}`, p.overlay);
+
+  // ── HEADER (trigger) ──────────────────────────────────────
   const wrap = document.createElement('div');
   wrap.className = 'pair-wrap';
-  wrap.innerHTML = `
-    <div class="pair-trigger" id="hdr${id}" onclick="togglePair('${id}')">
-      <div class="pair-trigger-left">
-        <div class="pair-counter">Par ${i+1} de la serie</div>
-        <div class="pair-names">
-          <span class="pair-dead">${p.deceased}</span>
-          <span class="pair-plus">+</span>
-          <span class="pair-alive">${p.living}</span>
-        </div>
-        <div class="pair-chips">
-          <span class="chip">🪦 Murió a los ${p.ageDead||p.ageDeceased}</span>
-          <span class="chip">${p.living} · ${p.ageLiving} años hoy</span>
-          <span class="chip gold">👻 ${p.ghostEffect}</span>
-        </div>
+
+  const trigger = document.createElement('div');
+  trigger.className = 'pair-trigger';
+  trigger.id = `hdr${id}`;
+  trigger.onclick = () => togglePair(id);
+  trigger.innerHTML = `
+    <div class="pair-trigger-left">
+      <div class="pair-counter">Par ${i+1} de la serie</div>
+      <div class="pair-names">
+        <span class="pair-dead">${esc(p.deceased)}</span>
+        <span class="pair-plus">+</span>
+        <span class="pair-alive">${esc(p.living)}</span>
       </div>
-      <div class="pair-arrow">▾</div>
+      <div class="pair-chips">
+        <span class="chip">🪦 Murió a los ${p.ageDead||p.ageDeceased}</span>
+        <span class="chip">${esc(p.living)} · ${p.ageLiving} años hoy</span>
+        <span class="chip gold">👻 ${esc(p.ghostEffect)}</span>
+      </div>
     </div>
-    <div class="pair-body" id="body${id}">
+    <div class="pair-arrow">▾</div>`;
 
-      <!-- OVERLAY -->
-      <div class="overlay-section">
-        <div class="overlay-section-label">🎬 Texto Overlay para el Editor</div>
-        <div class="overlay-section-desc">Copia y pega este texto en CapCut, Premiere o DaVinci. El número de la izquierda va en ROJO y el de la derecha en VERDE.</div>
-        <div class="overlay-screen">
-          <div class="overlay-names">
-            <span class="overlay-n-dead">${p.deceased.toUpperCase()}</span>
-            <span class="overlay-n-live">${p.living.toUpperCase()}</span>
-          </div>
-          <div class="overlay-ages">
-            <span class="overlay-age-dead">${p.ageDead||p.ageDeceased}</span>
-            <div class="overlay-age-sep"><span>🪦</span>AGE</div>
-            <span class="overlay-age-live">${p.ageLiving}</span>
-          </div>
-          <div class="overlay-caption">Gone ${p.deathYear} — ${p.overlayPhrase}</div>
-        </div>
-        <button class="copy-btn" style="width:100%;justify-content:center" id="ov${id}" onclick="copyStored('ov${id}','ov${id}')">📋 Copiar Texto Overlay Completo</button>
-      </div>
+  // ── BODY ──────────────────────────────────────────────────
+  const body = document.createElement('div');
+  body.className = 'pair-body';
+  body.id = `body${id}`;
 
-      <!-- PROMPT 1 -->
-      <div class="block-section-title">
-        <span class="icon">📸</span>
-        <span class="label">Imagen 1 — Lápida</span>
-        <div class="line"></div>
-      </div>
-      <div class="callout">
-        <span class="callout-icon">💡</span>
-        <div class="callout-text"><strong>Dónde usar:</strong> Midjourney, DALL-E o Flux. Esta es la imagen estática base — persona viva frente a la lápida.</div>
-      </div>
-      ${mkPromptBlock('Prompt 1 — Imagen Lápida (JSON)', 'Pega este JSON en tu generador de imágenes', p.prompt1, `p1${id}`)}
+  // — OVERLAY —
+  const ovKey = `ov_${id}`;
+  storeText(ovKey, p.overlay);
+  const ovBtn = document.createElement('button');
+  ovBtn.className = 'copy-btn';
+  ovBtn.id = ovKey;
+  ovBtn.style.cssText = 'width:100%;justify-content:center';
+  ovBtn.textContent = '📋 Copiar Texto Overlay Completo';
+  ovBtn.onclick = () => copyStored(ovKey, ovKey);
 
-      <!-- PROMPT 2 -->
-      <div class="block-section-title">
-        <span class="icon">👻</span>
-        <span class="label">Imagen 2 — Reunión Espiritual · ${p.ghostEffect}</span>
-        <div class="line"></div>
+  const ovSection = document.createElement('div');
+  ovSection.className = 'overlay-section';
+  ovSection.innerHTML = `
+    <div class="overlay-section-label">🎬 Texto Overlay para el Editor</div>
+    <div class="overlay-section-desc">Copia y pega este texto en CapCut, Premiere o DaVinci. Número izquierdo en ROJO, derecho en VERDE.</div>
+    <div class="overlay-screen">
+      <div class="overlay-names">
+        <span class="overlay-n-dead">${esc(p.deceased.toUpperCase())}</span>
+        <span class="overlay-n-live">${esc(p.living.toUpperCase())}</span>
       </div>
-      <div class="callout">
-        <span class="callout-icon">💡</span>
-        <div class="callout-text"><strong>Dónde usar:</strong> Midjourney o Flux con imagen de referencia. Necesitas la imagen del Prompt 1 + una foto del artista fallecido.</div>
+      <div class="overlay-ages">
+        <span class="overlay-age-dead">${p.ageDead||p.ageDeceased}</span>
+        <div class="overlay-age-sep"><span>🪦</span>AGE</div>
+        <span class="overlay-age-live">${p.ageLiving}</span>
       </div>
-      ${mkPromptBlock(`Prompt 2 — Reunión Espiritual (${p.ghostEffect})`, `${p.deceased} aparece como espíritu junto a ${p.living}`, p.prompt2, `p2${id}`)}
+      <div class="overlay-caption">Gone ${p.deathYear} — ${esc(p.overlayPhrase||'')}</div>
+    </div>`;
+  ovSection.appendChild(ovBtn);
+  body.appendChild(ovSection);
 
-      <!-- ANIMACIONES -->
-      <div class="block-section-title">
-        <span class="icon">🎬</span>
-        <span class="label">Animaciones Kling 2.1</span>
-        <div class="line"></div>
-      </div>
-      <div class="callout">
-        <span class="callout-icon">💡</span>
-        <div class="callout-text"><strong>Dónde usar:</strong> Kling AI v2.1. Genera las 3 animaciones usando las imágenes correspondientes como referencia.</div>
-      </div>
-      ${mkAnimBlock(1, 'Dejar Flores en la Lápida', 'Igual para todos los vídeos — no cambia nunca', false, p.anim1, `a1${id}`)}
-      ${mkAnimBlock(2, 'Reunión Emocional', 'Generada por IA exclusivamente para este par', true, p.anim2, `a2${id}`)}
-      ${mkAnimBlock(3, 'Transición al Siguiente Par', 'Generada por IA exclusivamente para este par', true, p.anim3, `a3${id}`)}
+  // — PROMPT 1 —
+  body.appendChild(mkSectionTitle('📸', 'Imagen 1 — Lápida'));
+  body.appendChild(mkCallout('Midjourney, DALL-E o Flux. Imagen estática base — persona viva frente a la lápida.'));
+  body.appendChild(mkPromptBlock('Prompt 1 — Imagen Lápida (JSON)', 'Pega este JSON en tu generador de imágenes', p.prompt1, `p1_${id}`));
 
-    </div>
-  `;
+  // — PROMPT 2 —
+  body.appendChild(mkSectionTitle('👻', `Imagen 2 — Reunión Espiritual · ${p.ghostEffect}`));
+  body.appendChild(mkCallout(`Midjourney o Flux con imagen de referencia. Necesitas Prompt 1 + foto del artista fallecido.`));
+  body.appendChild(mkPromptBlock(`Prompt 2 — Reunión Espiritual (${p.ghostEffect})`, `${p.deceased} aparece como espíritu junto a ${p.living}`, p.prompt2, `p2_${id}`));
+
+  // — ANIMACIONES —
+  body.appendChild(mkSectionTitle('🎬', 'Animaciones Kling 2.1'));
+  body.appendChild(mkCallout('Kling AI v2.1. Genera las 3 animaciones usando las imágenes como referencia.'));
+  body.appendChild(mkAnimBlock(1, 'Dejar Flores en la Lápida', 'Igual para todos los vídeos — no cambia nunca', false, p.anim1, `a1_${id}`));
+  body.appendChild(mkAnimBlock(2, 'Reunión Emocional', 'Generada por IA exclusivamente para este par', true, p.anim2, `a2_${id}`));
+  body.appendChild(mkAnimBlock(3, 'Transición al Siguiente Par', 'Generada por IA exclusivamente para este par', true, p.anim3, `a3_${id}`));
+
+  wrap.appendChild(trigger);
+  wrap.appendChild(body);
   return wrap;
+}
+
+function mkSectionTitle(icon, label) {
+  const d = document.createElement('div');
+  d.className = 'block-section-title';
+  d.innerHTML = `<span class="icon">${icon}</span><span class="label">${esc(label)}</span><div class="line"></div>`;
+  return d;
+}
+
+function mkCallout(text) {
+  const d = document.createElement('div');
+  d.className = 'callout';
+  d.innerHTML = `<span class="callout-icon">💡</span><div class="callout-text"><strong>Dónde usar:</strong> ${esc(text)}</div>`;
+  return d;
 }
 
 // ═══ SAFE TEXT STORE — evita que caracteres especiales rompan los onclick ═══
@@ -1214,42 +1225,81 @@ function copyStored(id, btnId) {
 
 function mkPromptBlock(title, sub, text, id) {
   storeText(id, text);
-  return `
-    <div class="prompt-block">
-      <div class="prompt-block-top">
-        <div class="prompt-block-info">
-          <div class="prompt-block-title">${title}</div>
-          <div class="prompt-block-sub">${sub}</div>
-        </div>
-        <button class="copy-btn" id="btn${id}" onclick="copyStored('${id}','btn${id}')">📋 Copiar</button>
-      </div>
-      <div class="prompt-content">${esc(text)}</div>
-    </div>`;
+
+  const block = document.createElement('div');
+  block.className = 'prompt-block';
+
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.id = `btn_${id}`;
+  btn.textContent = '📋 Copiar';
+  btn.onclick = () => copyStored(id, `btn_${id}`);
+
+  const top = document.createElement('div');
+  top.className = 'prompt-block-top';
+  top.innerHTML = `<div class="prompt-block-info"><div class="prompt-block-title">${esc(title)}</div><div class="prompt-block-sub">${esc(sub)}</div></div>`;
+  top.appendChild(btn);
+
+  const content = document.createElement('div');
+  content.className = 'prompt-content';
+  content.textContent = text; // textContent es 100% seguro, no interpreta HTML
+
+  block.appendChild(top);
+  block.appendChild(content);
+  return block;
 }
 
 function mkAnimBlock(num, title, sub, isAi, text, id) {
   storeText(id, text);
+
   const lines = (text||'').split('\n');
   const header = lines[0] || '';
-  const body = lines.slice(1).join('\n').trim();
+  const bodyText = lines.slice(1).join('\n').trim();
 
-  return `
-    <div class="anim-block">
-      <div class="anim-block-top">
-        <div class="anim-badge">
-          <div class="num">${num}</div>
-          ${title}
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${isAi ? '<span class="anim-ai-tag">✨ IA Generada</span>' : '<span class="anim-fixed-tag">🔒 Fija</span>'}
-          <button class="copy-btn" id="btn${id}" onclick="copyStored('${id}','btn${id}')">📋 Copiar</button>
-        </div>
-      </div>
-      <div class="anim-content">
-        <div class="anim-header-line">${esc(header)}</div>
-        <div class="anim-body">${esc(body)}</div>
-      </div>
-    </div>`;
+  const block = document.createElement('div');
+  block.className = 'anim-block';
+
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.id = `btn_${id}`;
+  btn.textContent = '📋 Copiar';
+  btn.onclick = () => copyStored(id, `btn_${id}`);
+
+  const top = document.createElement('div');
+  top.className = 'anim-block-top';
+
+  const badge = document.createElement('div');
+  badge.className = 'anim-badge';
+  badge.innerHTML = `<div class="num">${num}</div> ${esc(title)}`;
+
+  const tagWrap = document.createElement('div');
+  tagWrap.style.cssText = 'display:flex;align-items:center;gap:8px';
+  const tag = document.createElement('span');
+  tag.className = isAi ? 'anim-ai-tag' : 'anim-fixed-tag';
+  tag.textContent = isAi ? '✨ IA Generada' : '🔒 Fija';
+  tagWrap.appendChild(tag);
+  tagWrap.appendChild(btn);
+
+  top.appendChild(badge);
+  top.appendChild(tagWrap);
+
+  const content = document.createElement('div');
+  content.className = 'anim-content';
+
+  const headerLine = document.createElement('div');
+  headerLine.className = 'anim-header-line';
+  headerLine.textContent = header;
+
+  const bodyLine = document.createElement('div');
+  bodyLine.className = 'anim-body';
+  bodyLine.textContent = bodyText;
+
+  content.appendChild(headerLine);
+  content.appendChild(bodyLine);
+
+  block.appendChild(top);
+  block.appendChild(content);
+  return block;
 }
 
 function buildCopyAllEl(allText) {
