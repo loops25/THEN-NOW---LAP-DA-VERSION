@@ -730,7 +730,7 @@ hr.sep{border:none;border-top:1px solid var(--border);margin:20px 0}
 </div><!-- /wrap -->
 
 <script>
-const GROQ_KEY = "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";
+const GROQ_KEY = "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";
 let currentMode = 'auto', selectedCat = null;
 
 const GHOST_EFFECTS = [
@@ -744,12 +744,42 @@ const GHOST_EFFECTS = [
   {name:"Autumn Orange", style:"Ethereal ghost with autumn orange light filtering through, soft focus and vintage film texture, deeply nostalgic vibe"},
 ];
 
-const ANIM1 = `[Kling 2.1 — Animation 1: Place Flowers]
+// Animaciones con prompts exactos que funcionan en Kling 2.1
+function buildAnims(deceased, living, pairNum, totalPairs) {
+  const isLast = pairNum >= totalPairs - 1;
 
-The man turns around and carefully places down the flowers on the gravestone.
-Then turns back to face the camera with a solemn expression.
+  const anim1 = `[1. Clip] Putting down the Flower
+[Kling 2.1 Prompt]
+The man turns around and carefully places down the flower on the gravestone. Then turns back.
 
-⚙️ Use with: Prompt 1 image (tombstone scene)`;
+USO: Usa la imagen del PROMPT 1 (${living} frente a la lapida de ${deceased})`;
+
+  const anim2 = `[2. Clip] Angel joins from Left
+[Kling 2.1 Prompt]
+The man walks forward from the left. The man on the right smiles after he sees the man's face. They seem very happy to see each other.
+
+USO — TECNICA Start Frame + End Frame:
+• FRAME A (Start): imagen PROMPT 1 — ${living} solo frente a la lapida
+• FRAME B (End):   imagen PROMPT 2 — ${living} + espirito de ${deceased} juntos`;
+
+  const anim3 = !isLast ?
+`[3. Clip] Transition to next tombstone
+[Kling 2.1 Prompt]
+The couple turns their heads right and looks at the person on the right as the camera slowly and smoothly tracks right revealing the person standing and staring at the tombstone with sad facial expression, who at final second turns their head to look at the camera.
+
+USO — TECNICA Start Frame + End Frame:
+• FRAME A (Start): imagen PROMPT 2 de este par (Par ${pairNum + 1}) — ${living} + espirito de ${deceased}
+• FRAME B (End):   imagen PROMPT 1 del PAR ${pairNum + 2} — siguiente persona frente a su lapida` :
+`[3. Clip] Final Close — Cierre del video
+[Kling 2.1 Prompt]
+The couple slowly turns to face each other, sharing a final emotional look before the camera slowly pulls back revealing the full gravesite at golden hour.
+
+USO — TECNICA Start Frame + End Frame:
+• FRAME A (Start): imagen PROMPT 2 de este par — ${living} + espirito de ${deceased} juntos
+• FRAME B (End):   misma imagen o foto del cementerio al atardecer para el cierre`;
+
+  return { anim1, anim2, anim3 };
+}
 
 function setMode(m) {
   currentMode = m;
@@ -956,8 +986,6 @@ LIVING TRIBUTE GIVER: ${living} | Current age: ${ageLiving}
   "ghostEffect": "Choose the most emotionally fitting: Golden Particle / Foggy / White Robe / Golden Aura / Ethereal Ring / Phantom / Golden Hour / Autumn Orange — base it on ${deceased}'s personality, music style, and legacy",
   "ghostStyle": "The complete ghost style description sentence for the image prompt",
   "background": "A very specific, visually spectacular and cinematic cemetery or memorial park scene description. Be evocative and detailed.",
-  "anim2": "A unique, deeply emotional Kling 2.1 animation for the reunion of ${deceased}'s spirit and ${living}. Must be cinematic, sentimental, and specific to this pair. Start with: [Kling 2.1 — Animation 2: Reunion]\\n\\n then describe the movement clearly.",
-  "anim3": "A unique Kling 2.1 camera pan transition to reveal the next tribute pair. Smooth and cinematic. Start with: [Kling 2.1 — Animation 3: Pan Transition]\\n\\n then describe the camera movement clearly.",
   "overlayPhrase": "A devastatingly emotional 3-5 word American English phrase. Examples: Gone Too Soon, Forever In Our Hearts, The World Wept, Left Too Early, Heaven Got a Legend",
   "titles": [
     "Title 1 — DEVASTATING American English. Apply all 5 principles. Reference ${living} mourning ${deceased} specifically. Use their ages if emotionally powerful (${ageDead} vs ${ageLiving}). 1-2 emotional emojis. NOT generic.",
@@ -973,7 +1001,7 @@ LIVING TRIBUTE GIVER: ${living} | Current age: ${ageLiving}
       ghostEffect: d.ghostEffect, ghostStyle: d.ghostStyle, background: d.background,
       prompt1: buildP1(deceased, living, birth, death),
       prompt2: buildP2(deceased, living, d.ghostStyle, d.background),
-      anim1: ANIM1, anim2: d.anim2, anim3: d.anim3,
+      ...buildAnims(deceased, living, 0, 1),
       overlay: buildOverlayText(deceased, living, ageDead, ageLiving, dy, d.overlayPhrase),
       overlayPhrase: d.overlayPhrase,
       titles: d.titles, description: d.description, tags: d.tags,
@@ -982,7 +1010,7 @@ LIVING TRIBUTE GIVER: ${living} | Current age: ${ageLiving}
 }
 
 const CAT_PROMPTS = {
-  musicians: "iconic DECEASED music artists (Pop, Rock, R&B, Soul, Latin) paired with living presidents, kings, or world leaders. Focus on artists DEEPLY beloved by 45-65 year olds from USA, Brazil and Mexico. Maximum emotional devastation.",
+  musicians: "iconic DECEASED music artists (Pop, Rock, R&B, Soul, Latin) paired with living tribute givers. STRICT VARIETY RULES: (1) NO genre repetition — mix Rock, Soul, Pop, Latin, R&B, Country across the 5 pairs. (2) ALTERNATE tribute givers between: presidents/world leaders, living music legends, actors/celebrities, sports icons, royalty. (3) Mix nationalities: USA, Latin America, UK, global. (4) Mix eras: 1960s, 1970s, 1980s, 1990s, 2000s — no two from the same decade. Focus on artists deeply beloved by 45-65 year olds. Maximum emotional devastation.",
   actors: "iconic DECEASED Hollywood actors from the 1970s-2000s paired with living A-list actors or world leaders. Golden age cinema this demographic grew up watching.",
   boxers: "iconic DECEASED boxing legends paired with living boxing champions or presidents. USA and Latin American focus.",
   footballers: "iconic DECEASED football/soccer legends paired with living football icons or world leaders. Strong Latin American focus.",
@@ -999,9 +1027,11 @@ Category: ${CAT_PROMPTS[selectedCat]}
 CRITICAL RULES:
 - Every deceased person MUST be VERIFIABLY DECEASED (do not invent deaths)
 - Each pair must have a DIFFERENT ghost effect
-- Each pair must have UNIQUE anim2 and anim3 — never repeat camera movements
-- Maximum emotional resonance for 45-65 yr old USA/Brazil/Mexico audience
 - Ghost effects must match the artist's personality
+- Maximum emotional resonance for 45-65 yr old USA/Brazil/Mexico audience
+- VARIETY: No two deceased from same genre/field
+- VARIETY: Alternate tribute givers — mix presidents, celebrities, athletes, royalty, music legends. NOT all presidents.
+- Use a random seed of ${Math.floor(Math.random()*9999)} to ensure fresh unpredictable selections every time
 
 {
   "pairs": [{
@@ -1015,8 +1045,6 @@ CRITICAL RULES:
     "ghostEffect": "one of the 8 effects",
     "ghostStyle": "full ghost style description sentence",
     "background": "specific visually spectacular memorial location — detailed and cinematic",
-    "anim2": "unique emotional Kling 2.1 reunion. Start [Kling 2.1 — Animation 2: Reunion]\\n\\n then describe clearly",
-    "anim3": "unique Kling 2.1 pan transition. Start [Kling 2.1 — Animation 3: Pan Transition]\\n\\n then describe clearly",
     "overlayPhrase": "3-5 word devastating American English phrase"
   }],
   "seriesTitles": [
@@ -1028,12 +1056,12 @@ CRITICAL RULES:
   "seriesTags": ["15 specific SEO tags"]
 }`);
 
-    const pairs = d.pairs.map(p => ({
+    const pairs = d.pairs.map((p, idx) => ({
       ...p,
       ageDead: p.ageDeceased,
       prompt1: buildP1(p.deceased, p.living, p.birth, p.death),
       prompt2: buildP2(p.deceased, p.living, p.ghostStyle, p.background),
-      anim1: ANIM1,
+      ...buildAnims(p.deceased, p.living, idx, d.pairs.length),
       overlay: buildOverlayText(p.deceased, p.living, p.ageDeceased, p.ageLiving, p.deathYear, p.overlayPhrase),
     }));
     renderAuto(pairs, d);
